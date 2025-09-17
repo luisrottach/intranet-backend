@@ -51,7 +51,6 @@ async function getTokenFor(resourceBaseUrl, cacheObj) {
   const body = new URLSearchParams({
     client_id: CLIENT_ID,
     client_secret: CLIENT_SECRET,
-    // WICHTIG: Beim v2-Endpoint muss die Scope 'resource/.default' sein.
     scope: `${resourceBaseUrl}/.default`,
     grant_type: "client_credentials",
   });
@@ -66,7 +65,6 @@ async function getTokenFor(resourceBaseUrl, cacheObj) {
 }
 
 async function getGraphToken() {
-  // Graph
   return getTokenFor("https://graph.microsoft.com", {
     token: _graphToken,
     exp: _graphExp,
@@ -78,7 +76,6 @@ async function getGraphToken() {
 }
 
 async function getSharePointToken() {
-  // SharePoint (Tenant-Host), z.B. https://rottachblechverarbeitung.sharepoint.com
   return getTokenFor(`https://${SP_HOST}`, {
     token: _spToken,
     exp: _spExp,
@@ -174,15 +171,13 @@ app.get("/public/pages", async (req, res) => {
 });
 
 // ---------------- Page (Inhalt) via SharePoint REST ----------------
-// Parameter:
-//  - name: Dateiname in SitePages, z.B. "Ansprechpartner.aspx"
-//  - ODER webUrl: komplette Page-URL; wir schneiden den relativen Pfad heraus
 app.get("/public/page", async (req, res) => {
   if (!checkSharedKey(req, res)) return;
   try {
     if (!SP_HOST || !SP_SITE_PATH) {
       return res.status(400).json({
-        error: "SP_HOST and SP_SITE_PATH env vars are required, e.g. rottachblechverarbeitung.sharepoint.com and /sites/Intranet-Rottach-Werke",
+        error:
+          "SP_HOST and SP_SITE_PATH env vars are required, e.g. rottachblechverarbeitung.sharepoint.com and /sites/Intranet-Rottach-Werke",
       });
     }
 
@@ -193,7 +188,6 @@ app.get("/public/page", async (req, res) => {
     if (name) {
       serverRelativeUrl = `${SP_SITE_PATH}/SitePages/${name}`;
     } else if (webUrl) {
-      // webUrl wie https://<host>/sites/<site>/SitePages/Ansprechpartner.aspx
       try {
         const u = new URL(webUrl);
         serverRelativeUrl = u.pathname; // beginnt mit /sites/...
@@ -201,11 +195,12 @@ app.get("/public/page", async (req, res) => {
         return res.status(400).json({ error: "invalid webUrl" });
       }
     } else {
-      return res.status(400).json({ error: "missing 'name' or 'webUrl' query param" });
+      return res
+        .status(400)
+        .json({ error: "missing 'name' or 'webUrl' query param" });
     }
 
     const spToken = await getSharePointToken();
-    // $value liefert die HTML-Datei
     const url = `https://${SP_HOST}${SP_SITE_PATH}/_api/web/getfilebyserverrelativeurl('${serverRelativeUrl}')/$value`;
     const { data: html } = await axios.get(url, {
       headers: {
@@ -244,7 +239,9 @@ app.all("/graph-webhook", async (req, res) => {
           app_id: ONESIGNAL_APP_ID,
           headings: { en: "Neue Info im Intranet" },
           contents: {
-            en: `Änderung: ${n.changeType || "update"} in ${n.resource || "SharePoint"}`,
+            en: `Änderung: ${n.changeType || "update"} in ${
+              n.resource || "SharePoint"
+            }`,
           },
           included_segments: ["Subscribed Users"],
         },
