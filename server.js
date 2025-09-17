@@ -12,7 +12,7 @@ const {
   TENANT_ID,
   CLIENT_ID,
   CLIENT_SECRET,
-  SITE_ID,     // z.B. rottachblechverarbeitung.sharepoint.com:/sites/Intranet-Rottach-Werke  (oder GUID)
+  SITE_ID,     // z.B. rottachblechverarbeitung.sharepoint.com:/sites/Intranet-Rottach-Werke  (oder die lange GUID-Form)
   DRIVE_ID,    // ID der Dokumentbibliothek
   ONESIGNAL_APP_ID,
   ONESIGNAL_REST_KEY,
@@ -101,6 +101,31 @@ app.get("/public/download", async (req, res) => {
   }
 });
 
+// ---- Site Pages listen (Titel, Name, URL) ----
+app.get("/public/pages", async (req, res) => {
+  if (!checkSharedKey(req, res)) return;
+  try {
+    const token = await getAppToken();
+    const url = `https://graph.microsoft.com/v1.0/sites/${SITE_ID}/pages`;
+    const { data } = await axios.get(url, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const pages = (data.value || []).map((p) => ({
+      id: p.id,
+      title: p.title,
+      name: p.name,
+      pageLayout: p.pageLayout,
+      webUrl: p.webUrl,
+    }));
+
+    res.json(pages);
+  } catch (e) {
+    console.error(e?.response?.data || e.message);
+    res.status(500).send("error listing pages");
+  }
+});
+
 // ---- Graph Webhook (Validation + Notifications) ----
 app.all("/graph-webhook", async (req, res) => {
   // Validation: Graph sends ?validationToken=...
@@ -144,3 +169,4 @@ app.all("/graph-webhook", async (req, res) => {
 app.get("/", (_req, res) => res.send("intranet-backend up"));
 
 app.listen(PORT, () => console.log(`listening on :${PORT}`));
+
