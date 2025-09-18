@@ -36,7 +36,7 @@ const {
   // einfacher Schutz für /public/* Endpunkte
   PUBLIC_SHARED_KEY,
 
-  PORT = 3000,
+  PORT 
 } = process.env;
 
 // ---------------- Token-Helper ----------------
