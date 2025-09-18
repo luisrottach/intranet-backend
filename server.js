@@ -264,5 +264,5 @@ app.all("/graph-webhook", async (req, res) => {
 
 // ---------------- Health ----------------
 app.get("/", (_req, res) => res.send("intranet-backend up"));
-const { PORT = 3000 } = process.env;
-app.listen(PORT, () => console.log(`listening on :${PORT}`));
+const port = Number(PORT) || 3000;
+app.listen(port, '0.0.0.0', () => console.log(`listening on :${PORT}`));
